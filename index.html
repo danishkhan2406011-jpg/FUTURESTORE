@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FutureStore Pro | Legend Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #ffffff; --text: #000000; --card: #ffffff; --border: #f2f2f2; }
+        .dark-theme { --bg: #05070a; --text: #ffffff; --card: #0f172a; --border: #1e293b; }
+        
+        body { background-color: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; transition: 0.3s; overflow-x: hidden; }
+        .app-card { background: var(--card); border: 1px solid var(--border); border-radius: 2.5rem; transition: 0.3s; }
+        .app-card:hover { border-color: #22c55e; box-shadow: 0 15px 35px rgba(34, 197, 94, 0.15); transform: translateY(-8px); }
+        .btn-green { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; font-weight: 900; border-radius: 50px; transition: 0.3s; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.2); }
+        
+        #sidebar { transition: transform 0.4s ease-in-out; transform: translateX(-100%); z-index: 1000; }
+        #sidebar.open { transform: translateX(0); }
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999; backdrop-filter: blur(8px); }
+        .overlay.active { display: block; }
+        
+        .slide-panel { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 95%; max-width: 450px; background: var(--card); color: var(--text); border-radius: 35px; padding: 25px; z-index: 1001; box-shadow: 0 20px 60px rgba(0,0,0,0.3); border: 1px solid var(--border); max-height: 85vh; overflow-y: auto; }
+        .notif-badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 50px; border: 2px solid var(--bg); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="pb-10">
+
+    <div id="overlay" class="overlay" onclick="closeAll()"></div>
+
+    <aside id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-[var(--card)] shadow-2xl p-6 flex flex-col border-r border-[var(--border)]">
+        <div id="userProfile" class="mb-8 p-5 bg-gray-50/10 rounded-[2rem] text-center border border-[var(--border)]">
+            <div id="loginSection">
+                <button onclick="login()" class="btn-green px-6 py-3 text-[10px] w-full uppercase tracking-widest">Google Sign Up</button>
+            </div>
+            <div id="userInfo" class="hidden flex items-center gap-3 text-left">
+                <img id="userImg" src="" class="w-12 h-12 rounded-2xl border-2 border-green-500 shadow-md object-cover">
+                <div class="overflow-hidden">
+                    <p id="userName" class="font-black text-xs truncate w-32 uppercase"></p>
+                    <p class="text-[8px] text-green-600 font-black uppercase tracking-widest">Legend Member</p>
+                </div>
+            </div>
+        </div>
+
+        <nav class="space-y-1 flex-grow">
+            <button onclick="location.reload()" class="w-full text-left p-4 rounded-2xl font-black text-[11px] uppercase hover:bg-green-50/10 flex items-center gap-3">🏠 Home</button>
+            <button onclick="openPanel('downloadPanel')" class="w-full text-left p-4 rounded-2xl font-black text-[11px] uppercase hover:bg-green-50/10 flex items-center gap-3">⬇️ Downloads</button>
+            <button onclick="openPanel('notifPanel')" class="w-full text-left p-4 rounded-2xl font-black text-[11px] uppercase hover:bg-green-50/10 flex items-center gap-3 relative">
+                🔔 Notifications <span id="badgeCount" class="notif-badge hidden">0</span>
+            </button>
+            <button onclick="openPanel('settingsPanel')" class="w-full text-left p-4 rounded-2xl font-black text-[11px] uppercase hover:bg-green-50/10 flex items-center gap-3">⚙️ Settings</button>
+        </nav>
+        
+        <button id="logoutBtn" onclick="logout()" class="hidden mt-auto p-4 text-red-500 font-black uppercase text-[10px] tracking-widest text-center bg-red-50/10 rounded-2xl border border-red-100/10">🚪 Logout Account</button>
+    </aside>
+
+    <nav class="p-4 md:p-6 sticky top-0 bg-[var(--bg)]/80 backdrop-blur-md border-b border-[var(--border)] z-50">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleMenu()" class="p-2 bg-gray-50/10 rounded-xl">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <img src="logo.png" alt="Logo" class="w-8 h-8 md:w-10 md:h-10 object-contain">
+                <h1 class="text-xl font-black tracking-tighter uppercase italic">FUTURE<span class="text-green-500">STORE</span></h1>
+            </div>
+            <input type="text" id="searchBar" placeholder="Search..." class="bg-gray-50/10 border border-[var(--border)] rounded-xl px-4 py-2 text-sm font-bold w-32 md:w-64 outline-none">
+        </div>
+    </nav>
+
+    <div id="adminPanel" class="hidden container mx-auto p-4 md:p-10">
+        <div class="bg-green-500/5 border-2 border-green-500/10 p-6 md:p-10 rounded-[3rem]">
+            <h2 class="text-2xl font-black mb-8 uppercase text-center tracking-tighter">Admin <span class="text-green-600">Dashboard</span></h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div>
+                    <p class="font-black text-xs uppercase mb-4 text-green-600 italic">🚀 Upload Game/App</p>
+                    <form id="uploadForm" class="space-y-3">
+                        <input type="text" id="appName" placeholder="App Name" class="w-full p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] outline-none font-bold" required>
+                        <input type="url" id="appIcon" placeholder="Icon Image URL" class="w-full p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] outline-none font-bold" required>
+                        <input type="url" id="appDriveLink" placeholder="APK Download Link" class="w-full p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] outline-none font-bold" required>
+                        <button type="submit" class="btn-green w-full py-4 text-[10px] uppercase">Publish to Store</button>
+                    </form>
+                    <div id="adminAppList" class="mt-6 space-y-2 max-h-48 overflow-y-auto no-scrollbar"></div>
+                </div>
+
+                <div>
+                    <p class="font-black text-xs uppercase mb-4 text-orange-500 italic">🔔 Send New Alert</p>
+                    <form id="notifForm" class="space-y-3">
+                        <input type="text" id="notifTitle" placeholder="Title (e.g. New GTA Game)" class="w-full p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] outline-none font-bold" required>
+                        <input type="url" id="notifImg" placeholder="Icon URL for Notif" class="w-full p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] outline-none font-bold">
+                        <textarea id="notifDesc" placeholder="Description..." class="w-full p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] outline-none font-bold" required></textarea>
+                        <button type="submit" class="btn-green w-full py-4 text-[10px] uppercase bg-orange-500">Push Notification</button>
+                    </form>
+                    <div id="adminNotifList" class="mt-6 space-y-2 max-h-48 overflow-y-auto no-scrollbar"></div>
+                </div>
+            </div>
+            <button onclick="closeAdmin()" class="mt-10 block mx-auto text-[10px] font-black opacity-30 uppercase tracking-widest underline">Exit Admin</button>
+        </div>
+    </div>
+
+    <main id="mainStore" class="container mx-auto px-6 mt-14">
+        <h2 class="text-xl font-black mb-10 uppercase italic border-l-4 border-green-500 pl-4">Discover <span class="text-green-500">Apps</span></h2>
+        <div id="appGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 md:gap-10"></div>
+    </main>
+
+    <div id="notifPanel" class="slide-panel no-scrollbar"><h2 class="text-xl font-black mb-6 uppercase text-center italic text-green-500">Alerts</h2><div id="notifList" class="space-y-4"></div><button onclick="closeAll()" class="btn-green w-full py-4 mt-6 text-[10px]">CLOSE</button></div>
+    <div id="downloadPanel" class="slide-panel no-scrollbar"><h2 class="text-xl font-black mb-6 uppercase text-center italic text-green-600">My Downloads</h2><div id="downloadList" class="space-y-4"></div><button onclick="closeAll()" class="btn-green w-full py-4 mt-6 text-[10px]">BACK</button></div>
+    <div id="settingsPanel" class="slide-panel"><h2 class="text-xl font-black mb-6 uppercase text-green-500 text-center">Settings</h2><div class="space-y-4 font-black text-[10px] uppercase"><div class="flex justify-between items-center bg-gray-50/10 p-4 rounded-2xl"><span>Dark Mode</span><input type="checkbox" id="themeToggle" class="accent-green-500 w-6 h-6" onchange="toggleTheme()"></div><div class="flex justify-between items-center bg-gray-50/10 p-4 rounded-2xl"><span>Auto Update</span><input type="checkbox" id="updateToggle" class="accent-green-500 w-6 h-6" onchange="saveSettings()"></div></div><button onclick="closeAll()" class="btn-green w-full py-4 mt-8 text-[10px]">SAVE</button></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuTvD3xcVKqf78JO4FVTHTxDsEDRQZLYY",
+            authDomain: "wallflow1.firebaseapp.com",
+            projectId: "wallflow1",
+            storageBucket: "wallflow1.firebasestorage.app",
+            messagingSenderId: "65278651060",
+            appId: "1:65278651060:web:6bd0bef91594cc224645e1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        // AUTH FUNCTIONS
+        window.login = () => signInWithPopup(auth, provider).catch(err => alert(err.message));
+        window.logout = () => signOut(auth).then(() => location.reload()).catch(err => alert(err.message));
+
+        onAuthStateChanged(auth, (user) => {
+            const loginSec = document.getElementById('loginSection');
+            const userInf = document.getElementById('userInfo');
+            const lBtn = document.getElementById('logoutBtn');
+            if (user) {
+                loginSec.classList.add('hidden');
+                userInf.classList.remove('hidden');
+                lBtn.classList.remove('hidden');
+                document.getElementById('userImg').src = user.photoURL;
+                document.getElementById('userName').innerText = user.displayName;
+            } else {
+                loginSec.classList.remove('hidden');
+                userInf.classList.add('hidden');
+                lBtn.classList.add('hidden');
+            }
+        });
+
+        // UI HELPERS
+        window.toggleMenu = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('active'); };
+        window.openPanel = (id) => { closeAll(); document.getElementById(id).style.display = 'block'; document.getElementById('overlay').classList.add('active'); if(id === 'downloadPanel') renderDownloads(); if(id === 'notifPanel') resetBadge(); };
+        window.closeAll = () => { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('active'); document.querySelectorAll('.slide-panel').forEach(p => p.style.display = 'none'); };
+
+        window.toggleTheme = () => { const isDark = document.getElementById('themeToggle').checked; document.body.classList.toggle('dark-theme', isDark); localStorage.setItem('darkTheme', isDark); };
+        if(localStorage.getItem('darkTheme') === 'true') { document.body.classList.add('dark-theme'); document.getElementById('themeToggle').checked = true; }
+
+        window.saveSettings = () => { localStorage.setItem('autoUp', document.getElementById('updateToggle').checked); };
+        document.getElementById('updateToggle').checked = localStorage.getItem('autoUp') === 'true';
+
+        // ADMIN TRIGGER
+        document.getElementById('searchBar').addEventListener('input', (e) => {
+            if (e.target.value.toLowerCase() === 'admin') {
+                document.getElementById('mainStore').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                e.target.value = ""; closeAll(); window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+        window.closeAdmin = () => { document.getElementById('adminPanel').style.display = 'none'; document.getElementById('mainStore').style.display = 'block'; };
+
+        // FIREBASE SYNC
+        function fixD(url) { if (url.includes('drive.google.com')) { const id = url.split('/d/')[1]?.split('/')[0]; return `https://drive.google.com/uc?export=download&id=${id}`; } return url; }
+        
+        document.getElementById('uploadForm').onsubmit = async (e) => {
+            e.preventDefault();
+            await addDoc(collection(db, "apps"), { name: document.getElementById('appName').value, iconUrl: document.getElementById('appIcon').value, apkUrl: fixD(document.getElementById('appDriveLink').value), date: Date.now() });
+            document.getElementById('uploadForm').reset();
+        };
+
+        document.getElementById('notifForm').onsubmit = async (e) => {
+            e.preventDefault();
+            await addDoc(collection(db, "notifications"), { title: document.getElementById('notifTitle').value, img: document.getElementById('notifImg').value, desc: document.getElementById('notifDesc').value, time: serverTimestamp() });
+            alert("Sent!"); document.getElementById('notifForm').reset();
+        };
+
+        window.deleteNotif = async (id) => { if(confirm("Remove?")) await deleteDoc(doc(db, "notifications", id)); };
+        window.deleteApp = async (id) => { if(confirm("Delete App?")) await deleteDoc(doc(db, "apps", id)); };
+
+        // DATA LISTENERS
+        onSnapshot(query(collection(db, "notifications"), orderBy("time", "desc")), (snap) => {
+            const list = document.getElementById('notifList');
+            const adminList = document.getElementById('adminNotifList');
+            const badge = document.getElementById('badgeCount');
+            list.innerHTML = ''; adminList.innerHTML = '';
+            let total = snap.size;
+            let lastRead = parseInt(localStorage.getItem('readCount') || 0);
+            if(total > lastRead) { badge.innerText = total - lastRead; badge.classList.remove('hidden'); }
+            snap.forEach(d => {
+                const n = d.data();
+                list.innerHTML += `<div class="bg-gray-50/10 p-4 rounded-3xl border border-[var(--border)] flex items-center gap-4"><img src="${n.img || 'logo.png'}" class="w-12 h-12 rounded-2xl object-cover"><div class="flex-grow"><h4 class="font-black text-[10px] uppercase text-green-500">${n.title}</h4><p class="text-[9px] opacity-70 mb-2 truncate w-40">${n.desc}</p><button class="bg-green-500 text-white px-3 py-1 rounded-full text-[8px] font-black uppercase shadow-sm">Get Now</button></div></div>`;
+                adminList.innerHTML += `<div class="flex justify-between items-center bg-white/5 p-3 rounded-2xl text-[9px] font-black border border-[var(--border)]"><span>${n.title}</span><button onclick="deleteNotif('${d.id}')" class="text-red-500 px-2 py-1">Del</button></div>`;
+            });
+        });
+
+        window.resetBadge = () => { document.getElementById('badgeCount').classList.add('hidden'); onSnapshot(collection(db, "notifications"), (s) => localStorage.setItem('readCount', s.size)); };
+
+        onSnapshot(collection(db, "apps"), (snap) => {
+            const grid = document.getElementById('appGrid');
+            const adminList = document.getElementById('adminAppList');
+            grid.innerHTML = ''; adminList.innerHTML = '';
+            snap.forEach(d => {
+                const data = d.data();
+                grid.innerHTML += `<div class="app-card p-6 text-center"><img src="${data.iconUrl}" class="w-16 h-16 mx-auto rounded-[1.8rem] mb-5 object-cover bg-gray-50 border border-gray-100"><h3 class="font-black text-[10px] truncate mb-5 uppercase tracking-tighter">${data.name}</h3><button onclick="addToDownloads('${data.name}', '${data.iconUrl}', '${data.apkUrl}')" class="btn-green w-full py-3.5 text-[9px] uppercase tracking-widest">DOWNLOAD</button></div>`;
+                adminList.innerHTML += `<div class="flex justify-between items-center bg-white/5 p-4 rounded-2xl text-[9px] font-black border border-[var(--border)]"><span>${data.name}</span><button onclick="deleteApp('${d.id}')" class="text-red-500 px-2 py-1">Del</button></div>`;
+            });
+        });
+
+        window.addToDownloads = (name, icon, url) => {
+            let list = JSON.parse(localStorage.getItem('myApps')) || [];
+            if (!list.find(a => a.name === name)) { list.push({ name, icon, url }); localStorage.setItem('myApps', JSON.stringify(list)); }
+            window.location.href = url;
+        };
+
+        window.renderDownloads = () => {
+            const container = document.getElementById('downloadList');
+            const apps = JSON.parse(localStorage.getItem('myApps')) || [];
+            container.innerHTML = apps.length === 0 ? '<p class="text-center py-10 opacity-30 font-black uppercase text-xs">Empty</p>' : '';
+            apps.forEach((a, i) => { container.innerHTML += `<div class="flex items-center justify-between bg-gray-50/10 p-4 rounded-3xl border border-[var(--border)]"><div class="flex items-center gap-3"><img src="${a.icon}" class="w-10 h-10 rounded-xl object-cover shadow-sm"><span class="font-black text-[9px] uppercase truncate w-24">${a.name}</span></div><div class="flex gap-2"><button onclick="window.open('${a.url}')" class="bg-green-500 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase">Open</button><button onclick="removeDown(${i})" class="text-red-500 text-[8px] font-black px-2">Del</button></div></div>`; });
+        };
+        window.removeDown = (i) => { let apps = JSON.parse(localStorage.getItem('myApps')); apps.splice(i, 1); localStorage.setItem('myApps', JSON.stringify(apps)); renderDownloads(); };
+    </script>
+</body>
+</html>
